@@ -1,0 +1,16 @@
+name = "turtle"
+compatibility_date = "2024-11-10"
+main = "src/index.tsx"
+
+# 静的アセット配信（Workers Sites）
+[site]
+bucket = "./public"
+
+[observability]
+enabled = true
+
+# Cloudflare D1 Database
+[[d1_databases]]
+binding = "DB"
+database_name = "turtle-db"
+database_id = "159105d4-7609-4dc6-beb3-68e91ce4e970"
