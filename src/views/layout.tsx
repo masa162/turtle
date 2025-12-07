@@ -17,7 +17,30 @@ export const Layout = ({ title, children }: LayoutProps) => {
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Noto+Serif+JP:wght@400;600;700;900&display=swap" rel="stylesheet" />
         <link rel="stylesheet" href="/styles.css" />
-        <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+        <script>{`
+          function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            if (menu.classList.contains('hidden')) {
+              menu.classList.remove('hidden');
+            } else {
+              menu.classList.add('hidden');
+            }
+          }
+          
+          function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+          
+          // ページトップに戻るボタンの表示/非表示
+          window.addEventListener('scroll', function() {
+            const scrollBtn = document.getElementById('scroll-to-top');
+            if (window.scrollY > 300) {
+              scrollBtn.classList.remove('hidden');
+            } else {
+              scrollBtn.classList.add('hidden');
+            }
+          });
+        `}</script>
       </head>
       <body class="min-h-screen flex flex-col bg-white">
         {/* モバイルヘッダー */}
@@ -25,9 +48,7 @@ export const Layout = ({ title, children }: LayoutProps) => {
           <div class="flex items-center justify-between px-4 py-3">
             <button
               class="p-2 hover:bg-washi-dark rounded-lg transition-colors text-sumi"
-              hx-get="/menu"
-              hx-target="#mobile-menu"
-              hx-swap="innerHTML"
+              onclick="toggleMobileMenu()"
             >
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -39,7 +60,17 @@ export const Layout = ({ title, children }: LayoutProps) => {
         </header>
 
         {/* モバイルメニュー */}
-        <div id="mobile-menu" class="lg:hidden"></div>
+        <div id="mobile-menu" class="lg:hidden hidden bg-washi border-b-2 border-matcha-light">
+          <nav class="p-4">
+            <a
+              href="/"
+              class="block px-4 py-3 rounded-lg transition-all duration-200 mb-2 font-medium hover:bg-washi-dark hover:text-shu text-sumi"
+              onclick="toggleMobileMenu()"
+            >
+              ホーム
+            </a>
+          </nav>
+        </div>
 
         <div class="flex flex-1">
           {/* デスクトップサイドバー */}
@@ -81,6 +112,18 @@ export const Layout = ({ title, children }: LayoutProps) => {
           <p class="text-sm">&copy; 2025 黃亀図書室</p>
           <p class="text-xs text-gray-400 mt-1">運営: 中山正之（薬剤師）</p>
         </footer>
+
+        {/* ページトップに戻るボタン */}
+        <button
+          id="scroll-to-top"
+          onclick="scrollToTop()"
+          class="hidden fixed bottom-6 right-6 w-12 h-12 bg-matcha hover:bg-matcha-dark text-white rounded-full shadow-2xl transition-all duration-300 flex items-center justify-center z-50"
+          aria-label="ページトップに戻る"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+          </svg>
+        </button>
       </body>
     </html>
   )
