@@ -1,69 +1,40 @@
 import { createMiddleware } from 'hono/factory'
-import { getCookie } from 'hono/cookie'
 import type { Bindings, Variables } from '../types/bindings'
 
-// パスワードハッシュ生成（初回セットアップ用）
-export async function hashPassword(password: string): Promise<string> {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(password)
-  const hash = await crypto.subtle.digest('SHA-256', data)
-  return Array.from(new Uint8Array(hash))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('')
-}
-
-// パスワード検証
-export async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  const passwordHash = await hashPassword(password)
-  return passwordHash === hash
-}
-
-// JWTトークン生成（簡易版）
-export async function generateToken(userId: string, secret: string): Promise<string> {
-  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
-  const payload = btoa(JSON.stringify({ userId, exp: Date.now() + 86400000 })) // 24時間
-  const signature = await hashPassword(`${header}.${payload}.${secret}`)
-  return `${header}.${payload}.${signature}`
-}
-
-// JWTトークン検証（簡易版）
-export async function verifyToken(token: string, secret: string): Promise<string | null> {
-  try {
-    const [header, payload, signature] = token.split('.')
-    const expectedSignature = await hashPassword(`${header}.${payload}.${secret}`)
-    
-    if (signature !== expectedSignature) {
-      return null
-    }
-
-    const decodedPayload = JSON.parse(atob(payload))
-    
-    if (decodedPayload.exp < Date.now()) {
-      return null
-    }
-
-    return decodedPayload.userId
-  } catch {
-    return null
-  }
-}
-
-// 管理画面認証ミドルウェア
+// Basic認証ミドルウェア
 export const adminAuth = createMiddleware<{ Bindings: Bindings; Variables: Variables }>(
   async (c, next) => {
-    const token = getCookie(c, 'admin_token')
+    const authHeader = c.req.header('Authorization')
 
-    if (!token) {
-      return c.redirect('/admin/login')
+    if (!authHeader || !authHeader.startsWith('Basic ')) {
+      return c.text('Unauthorized', 401, {
+        'WWW-Authenticate': 'Basic realm="Admin Area"'
+      })
     }
 
-    const userId = await verifyToken(token, c.env.JWT_SECRET)
+    try {
+      // Basic認証のデコード
+      const base64Credentials = authHeader.split(' ')[1]
+      const credentials = atob(base64Credentials)
+      const [username, password] = credentials.split(':')
 
-    if (!userId) {
-      return c.redirect('/admin/login')
+      // 環境変数から認証情報を取得
+      const adminUserId = c.env.ADMIN_USER_ID
+      const adminPassword = c.env.ADMIN_PASSWORD
+
+      // 認証チェック
+      if (username === adminUserId && password === adminPassword) {
+        c.set('userId', username)
+        await next()
+      } else {
+        return c.text('Unauthorized', 401, {
+          'WWW-Authenticate': 'Basic realm="Admin Area"'
+        })
+      }
+    } catch (error) {
+      return c.text('Unauthorized', 401, {
+        'WWW-Authenticate': 'Basic realm="Admin Area"'
+      })
     }
-
-    c.set('userId', userId)
-    await next()
   }
 )

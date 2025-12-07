@@ -2,19 +2,17 @@
 
 import { Hono } from 'hono'
 import { getAssetFromKV } from '@cloudflare/kv-asset-handler'
-import { getCookie, setCookie, deleteCookie } from 'hono/cookie'
 import type { Bindings, Variables } from './types/bindings'
 import { Database } from './lib/db'
 import { HomePage } from './views/home'
 import { ChapterDetailPage } from './views/chapter-detail'
 import { VerseDetailPage } from './views/verse-detail'
-import { LoginPage } from './views/admin/login'
 import { DashboardPage } from './views/admin/dashboard'
 import { ChaptersPage } from './views/admin/chapters'
 import { ChapterFormPage } from './views/admin/chapter-form'
 import { VersesPage } from './views/admin/verses'
 import { VerseFormPage } from './views/admin/verse-form'
-import { adminAuth, verifyPassword, generateToken, hashPassword } from './lib/auth'
+import { adminAuth } from './lib/auth'
 import manifestJSON from '__STATIC_CONTENT_MANIFEST'
 
 const assetManifest = JSON.parse(manifestJSON)
@@ -92,46 +90,6 @@ app.get('/chapters/:slug/verses/:verseId', async (c) => {
 })
 
 // ========== 管理画面 ==========
-
-// ログインページ
-app.get('/admin/login', (c) => {
-  return c.html(<LoginPage />)
-})
-
-// ログイン処理
-app.post('/admin/login', async (c) => {
-  const { userId, password } = await c.req.parseBody()
-
-  const adminUserId = c.env.ADMIN_USER_ID
-  const adminPasswordHash = c.env.ADMIN_PASSWORD_HASH
-
-  if (userId !== adminUserId) {
-    return c.html(<LoginPage error="ユーザーIDまたはパスワードが正しくありません" />)
-  }
-
-  const isValid = await verifyPassword(password as string, adminPasswordHash)
-
-  if (!isValid) {
-    return c.html(<LoginPage error="ユーザーIDまたはパスワードが正しくありません" />)
-  }
-
-  const token = await generateToken(userId as string, c.env.JWT_SECRET)
-  setCookie(c, 'admin_token', token, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'Strict',
-    maxAge: 86400, // 24時間
-    path: '/admin'
-  })
-
-  return c.redirect('/admin')
-})
-
-// ログアウト処理
-app.post('/admin/logout', (c) => {
-  deleteCookie(c, 'admin_token', { path: '/admin' })
-  return c.redirect('/admin/login')
-})
 
 // ダッシュボード
 app.get('/admin', adminAuth, async (c) => {

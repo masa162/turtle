@@ -5,8 +5,7 @@ export interface Bindings {
   DB: D1Database
   __STATIC_CONTENT: KVNamespace
   ADMIN_USER_ID: string
-  ADMIN_PASSWORD_HASH: string
-  JWT_SECRET: string
+  ADMIN_PASSWORD: string
 }
 
 // Honoコンテキスト変数の型定義
