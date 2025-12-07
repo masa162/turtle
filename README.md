@@ -37,9 +37,11 @@ npm run dev
 
 ## 管理画面
 
-- URL: `/admin/login`
-- ユーザーID: `mn`
-- パスワード: `39`
+管理画面にアクセスするには、Basic認証が必要です。
+
+- URL: `/admin`
+- 認証方式: HTTP Basic Authentication
+- 認証情報: 環境変数 `ADMIN_USER_ID` と `ADMIN_PASSWORD` で設定
 
 ## デプロイ
 
@@ -48,8 +50,10 @@ npm run dev
 本番環境では以下の環境変数をCloudflare Dashboardで設定してください：
 
 - `ADMIN_USER_ID`: 管理画面のユーザーID
-- `ADMIN_PASSWORD_HASH`: パスワードのSHA-256ハッシュ
-- `JWT_SECRET`: JWT署名用の秘密鍵
+- `ADMIN_PASSWORD`: 管理画面のパスワード（Secret推奨）
+
+> [!IMPORTANT]
+> セキュリティのため、認証情報は環境変数として設定し、コードにハードコーディングしないでください。
 
 ### デプロイコマンド
 
